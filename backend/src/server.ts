@@ -187,6 +187,9 @@ class ApiError extends Error {
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
 
 const RESERVATION_TTL_SECONDS = Number(process.env.RESERVATION_TTL_SECONDS || 600);
 
