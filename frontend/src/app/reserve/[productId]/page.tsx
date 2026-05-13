@@ -4,6 +4,21 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '../../../components/toast';
 
+// Generate static params for all product IDs so Next can pre‑render the dynamic route during static export.
+export async function generateStaticParams() {
+  try {
+    const apiBase = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
+    const res = await fetch(`${apiBase}/api/products`);
+    if (!res.ok) return [];
+    const products = await res.json();
+    return products.map((p: any) => ({ productId: p.id.toString() }));
+  } catch (e) {
+    // On build failure we just return an empty array to avoid breaking the export.
+    return [];
+  }
+}
+
+
 declare global {
   interface Window {
     Razorpay?: new (options: Record<string, unknown>) => {
