@@ -129,33 +129,33 @@ export default function ProductsPage() {
               {product.warehouses
                 .filter((warehouse) => warehouseFilter === 'ALL' || String(warehouse.warehouseId) === warehouseFilter)
                 .map((warehouse) => {
-                const totalStock = Math.max(warehouse.totalStock, 1);
-                const availablePercent = Math.max(0, Math.min(100, Math.round((warehouse.availableStock / totalStock) * 100)));
-                const isLowStock = warehouse.availableStock <= lowStockThreshold;
+                  const totalStock = Math.max(warehouse.totalStock, 1);
+                  const availablePercent = Math.max(0, Math.min(100, Math.round((warehouse.availableStock / totalStock) * 100)));
+                  const isLowStock = warehouse.availableStock <= lowStockThreshold;
 
-                return (
-                  <div key={warehouse.warehouseId} className={`warehouse-row ${isLowStock ? 'warehouse-row--low' : ''}`}>
-                    <div className="warehouse-row__top">
-                      <div>
-                        <div className="warehouse-name">{warehouse.warehouseName}</div>
-                        <div className="warehouse-meta">Reserved {warehouse.reservedStock} of {warehouse.totalStock}</div>
+                  return (
+                    <div key={warehouse.warehouseId} className={`warehouse-row ${isLowStock ? 'warehouse-row--low' : ''}`}>
+                      <div className="warehouse-row__top">
+                        <div>
+                          <div className="warehouse-name">{warehouse.warehouseName}</div>
+                          <div className="warehouse-meta">Reserved {warehouse.reservedStock} of {warehouse.totalStock}</div>
+                        </div>
+                        <div className={`warehouse-stock ${isLowStock ? 'warehouse-stock--low' : ''}`}>
+                          {warehouse.availableStock} available
+                        </div>
                       </div>
-                      <div className={`warehouse-stock ${isLowStock ? 'warehouse-stock--low' : ''}`}>
-                        {warehouse.availableStock} available
+                      <div className="progress-bar" aria-hidden="true">
+                        <span style={{ width: `${availablePercent}%` }} />
+                      </div>
+                      <div className="warehouse-row__bottom">
+                        <span className={`warehouse-pill ${isLowStock ? 'warehouse-pill--low' : ''}`}>
+                          {isLowStock ? 'Low stock' : 'In stock'}
+                        </span>
+                        <a href={`/reserve/${product.id}?warehouseId=${warehouse.warehouseId}`} className="button button--small button--primary">Reserve</a>
                       </div>
                     </div>
-                    <div className="progress-bar" aria-hidden="true">
-                      <span style={{ width: `${availablePercent}%` }} />
-                    </div>
-                    <div className="warehouse-row__bottom">
-                      <span className={`warehouse-pill ${isLowStock ? 'warehouse-pill--low' : ''}`}>
-                        {isLowStock ? 'Low stock' : 'In stock'}
-                      </span>
-                      <a href={`/reserve/${product.id}?warehouseId=${warehouse.warehouseId}`} className="button button--small button--primary">Reserve</a>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </article>
         ))}
