@@ -2,135 +2,237 @@
 
 A full-stack inventory reservation and payment system with product reservation capabilities and integrated Razorpay checkout.
 
-## Project Structure
+---
 
-```
-├── backend/                # Express API + Prisma ORM
-│   ├── src/
-│   │   ├── server.ts      # Main server entry
-│   │   └── prisma.ts      # Database client
+# 🚀 Features
+
+- ✅ Inventory Reservation System
+- ✅ Razorpay Payment Integration
+- ✅ Reservation Expiry with TTL
+- ✅ Idempotent APIs
+- ✅ PostgreSQL + Prisma ORM
+- ✅ Demo Mode without DB
+- ✅ Responsive Modern UI
+- ✅ Full TypeScript Support
+
+---
+
+# 🏗️ Project Structure
+
+```bash
+allo-health/
+├── backend/
 │   ├── prisma/
-│   │   ├── schema.prisma  # Database schema
-│   │   └── seed.ts        # Database seeding
+│   │   ├── schema.prisma
+│   │   └── seed.ts
+│   ├── src/
+│   │   ├── server.ts
+│   │   └── prisma.ts
 │   └── package.json
-└── frontend/              # Next.js application
-    ├── src/
-    │   ├── app/           # Next.js app directory
-    │   ├── components/    # React components
-    │   └── lib/           # Utilities
-    └── package.json
+│
+├── frontend/
+│   ├── public/
+│   ├── screenshots/
+│   │   ├── home.png
+│   │   ├── reservation.png
+│   │   ├── checkout.png
+│   │   ├── confirmation.png
+│   │   └── mobile.png
+│   │
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/
+│   │   └── lib/
+│   │
+│   └── package.json
+│
+└── README.md
 ```
 
-## Features
+---
 
-- **Inventory Reservation**: Create and manage product reservations with automatic TTL expiry
-- **Payment Integration**: Razorpay checkout for secure payment processing
-- **Idempotent Requests**: Safe retry handling with idempotency keys
-- **Demo Mode**: Full functionality works without database setup
-- **Type Safety**: TypeScript across frontend and backend
-- **Responsive UI**: TailwindCSS with modern design
+# 🛠️ Tech Stack
 
-## Tech Stack
+## Backend
 
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Language**: TypeScript
-- **ORM**: Prisma
-- **Database**: PostgreSQL (optional, works in demo mode)
-- **Payments**: Razorpay
-- **Validation**: Zod
+- Node.js
+- Express.js
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Razorpay
+- Zod Validation
 
-### Frontend
-- **Framework**: Next.js 14
-- **UI Library**: React 18
-- **Styling**: TailwindCSS
-- **Data Fetching**: React Query
-- **Language**: TypeScript
+## Frontend
 
-## Getting Started
+- Next.js 14
+- React 18
+- TailwindCSS
+- React Query
+- TypeScript
 
-### Prerequisites
+---
+
+# ⚡ Getting Started
+
+## Prerequisites
 
 - Node.js 18+
 - npm or yarn
-- (Optional) PostgreSQL database
+- PostgreSQL (Optional)
 
-### Installation
+---
 
-1. Clone the repository
+# 📦 Installation
+
+## 1️⃣ Clone Repository
+
 ```bash
 git clone <repository-url>
 cd allo-health
 ```
 
-2. Install backend dependencies
+---
+
+# 🔧 Backend Setup
+
+## Install Dependencies
+
 ```bash
 cd backend
 npm install
 ```
 
-3. Install frontend dependencies
-```bash
-cd ../frontend
-npm install
-```
-
-### Backend Setup
-
-1. Create a `.env` file in the `backend` directory:
+## Create `.env`
 
 ```env
 PORT=4000
 RESERVATION_TTL_SECONDS=600
-```
 
-**Optional variables** (for database and payments):
-```env
+# Optional
 DATABASE_URL=postgresql://user:password@localhost:5432/allo_health
-RAZORPAY_KEY_ID=rzp_test_...
-RAZORPAY_KEY_SECRET=...
+
+# Razorpay
+RAZORPAY_KEY_ID=rzp_test_xxxxx
+RAZORPAY_KEY_SECRET=xxxxxxxx
 ```
 
-2. Set up the database (if using PostgreSQL):
+## Run Database Migration
+
 ```bash
 npm run prisma:migrate
+```
+
+## Seed Database
+
+```bash
 npm run prisma:seed
 ```
 
-3. Start the development server:
+## Start Backend
+
 ```bash
 npm run dev
 ```
 
-The backend will run on `http://localhost:4000`. If `DATABASE_URL` is not set, the server runs in **demo mode** with in-memory sample data.
+Backend runs on:
 
-### Frontend Setup
+```bash
+http://localhost:4000
+```
 
-1. Create a `.env.local` file in the `frontend` directory (optional):
+---
+
+# 💻 Frontend Setup
+
+## Install Dependencies
+
+```bash
+cd frontend
+npm install
+```
+
+## Create `.env.local`
 
 ```env
 NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
 ```
 
-If not set, defaults to `http://localhost:4000`.
+## Start Frontend
 
-2. Start the development server:
 ```bash
 npm run dev
 ```
 
-The frontend will run on `http://localhost:3000`.
-
-## API Documentation
-
-### Create Reservation
+Frontend runs on:
 
 ```bash
+http://localhost:3000
+```
+
+---
+
+# 📸 Screenshots
+
+## 🏠 Home Page
+
+Main inventory dashboard with available products.
+
+<img width="1755" height="868" alt="image" src="https://github.com/user-attachments/assets/e626a80a-ca8c-4e96-8b0e-5fff0645120e" />
+
+---
+
+## 📦 Product Reservation
+
+Reserve products with quantity selection.
+
+<img width="1533" height="846" alt="image" src="https://github.com/user-attachments/assets/d4c82d8a-230a-4506-a780-7df047600dfc" />
+<img width="1735" height="851" alt="image" src="https://github.com/user-attachments/assets/414db589-115e-44e6-8129-c82f4013ce59" />
+
+
+---
+
+## 💳 Razorpay Checkout
+
+Integrated Razorpay payment flow.
+<img width="1757" height="860" alt="image" src="https://github.com/user-attachments/assets/01e2f53b-ce79-42ca-8c8f-f9a05e394237" />
+
+---
+
+## ✅ Reservation Confirmation
+
+Successful reservation confirmation screen.
+
+<img width="1367" height="832" alt="image" src="https://github.com/user-attachments/assets/690cbbf6-b4e4-4ee7-a824-e89a79471008" />
+
+---
+
+## 📱 Mobile Responsive UI
+
+Responsive mobile-friendly design.
+
+<img width="593" height="753" alt="image" src="https://github.com/user-attachments/assets/8efd98d1-e7e6-4474-a841-13f4633c1556" />
+
+---
+
+# 🔌 API Documentation
+
+# Create Reservation
+
+```http
 POST /api/reservations
+```
+
+## Headers
+
+```http
 Content-Type: application/json
 Idempotency-Key: unique-key
+```
 
+## Body
+
+```json
 {
   "productId": 1,
   "warehouseId": 1,
@@ -138,23 +240,25 @@ Idempotency-Key: unique-key
 }
 ```
 
-### Create Razorpay Order
+---
 
-```bash
+# Create Razorpay Order
+
+```http
 POST /api/reservations/:id/razorpay-order
-Content-Type: application/json
-Idempotency-Key: unique-key
-
-{}
 ```
 
-### Confirm Reservation
+---
 
-```bash
+# Confirm Reservation
+
+```http
 POST /api/reservations/:id/confirm
-Content-Type: application/json
-Idempotency-Key: unique-key
+```
 
+## Body
+
+```json
 {
   "razorpayPaymentId": "pay_...",
   "razorpayOrderId": "order_...",
@@ -162,61 +266,96 @@ Idempotency-Key: unique-key
 }
 ```
 
-## Payment Flow
+---
 
-1. **Create Reservation** - Reserve inventory with `POST /api/reservations`
-2. **Generate Order** - Request Razorpay order with `POST /api/reservations/:id/razorpay-order`
-3. **Checkout** - Complete payment through Razorpay in browser
-4. **Confirm** - Verify payment with `POST /api/reservations/:id/confirm`
+# 💳 Payment Flow
 
-In demo mode (no Razorpay keys), checkout uses a mock path for testing.
+1. Create Reservation
+2. Generate Razorpay Order
+3. Complete Checkout
+4. Verify Payment
+5. Confirm Reservation
 
-## Idempotency
+---
 
-All POST endpoints support idempotent requests. Include an `Idempotency-Key` header to safely retry requests:
+# 🔄 Idempotency Support
+
+All POST APIs support safe retries using:
+
+```http
+Idempotency-Key
+```
+
+Example:
 
 ```bash
 curl -X POST http://localhost:4000/api/reservations \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: reserve-123" \
-  -d '{"productId":1,"warehouseId":1,"quantity":2}'
+-H "Content-Type: application/json" \
+-H "Idempotency-Key: reserve-123" \
+-d '{"productId":1,"warehouseId":1,"quantity":2}'
 ```
 
-The same key will return the cached response instead of creating duplicates.
+---
 
-## Reservation Expiry
+# ⏳ Reservation Expiry
 
-Reservations automatically expire based on `RESERVATION_TTL_SECONDS`. Call the cleanup endpoint to release expired reservations:
+Reservations expire automatically based on:
 
-```bash
+```env
+RESERVATION_TTL_SECONDS
+```
+
+Cleanup endpoint:
+
+```http
 POST /api/reservations/cleanup
 ```
 
-In production, wire this to a cron job or worker.
+---
 
-## Development Scripts
+# 🧪 Demo Mode
 
-### Backend
+Works fully without database setup.
+
+## Demo Features
+
+- In-memory inventory
+- Mock payment flow
+- No PostgreSQL required
+- No Razorpay keys required
+
+Perfect for:
+- Local testing
+- College projects
+- Quick demos
+
+---
+
+# 📜 Development Scripts
+
+## Backend
 
 ```bash
-npm run dev              # Start dev server with hot reload
-npm run build            # Build TypeScript
-npm start                # Run production build
-npm run prisma:migrate   # Run database migrations
-npm run prisma:seed      # Seed database with sample data
+npm run dev
+npm run build
+npm start
+npm run prisma:migrate
+npm run prisma:seed
 ```
 
-### Frontend
+## Frontend
 
 ```bash
-npm run dev              # Start Next.js dev server
-npm run build            # Build for production
-npm start                # Start production server
+npm run dev
+npm run build
+npm start
 ```
 
-## Building for Production
+---
 
-### Backend
+# 🚀 Production Build
+
+## Backend
 
 ```bash
 cd backend
@@ -224,7 +363,7 @@ npm run build
 npm start
 ```
 
-### Frontend
+## Frontend
 
 ```bash
 cd frontend
@@ -232,53 +371,90 @@ npm run build
 npm start
 ```
 
-## Environment Variables Reference
+---
 
-### Backend
+# 🌍 Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `4000` | Server port |
-| `DATABASE_URL` | - | PostgreSQL connection string (optional, demo mode if absent) |
-| `RESERVATION_TTL_SECONDS` | `600` | Reservation expiry time in seconds |
-| `RAZORPAY_KEY_ID` | - | Razorpay API key (optional) |
-| `RAZORPAY_KEY_SECRET` | - | Razorpay API secret (optional) |
+## Backend Variables
 
-### Frontend
+| Variable | Description |
+|----------|-------------|
+| PORT | Backend Port |
+| DATABASE_URL | PostgreSQL URL |
+| RESERVATION_TTL_SECONDS | Reservation expiry |
+| RAZORPAY_KEY_ID | Razorpay key |
+| RAZORPAY_KEY_SECRET | Razorpay secret |
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_BACKEND_URL` | `http://localhost:4000` | Backend API URL |
+---
 
-## Demo Mode
+## Frontend Variables
 
-The application fully works without a database:
+| Variable | Description |
+|----------|-------------|
+| NEXT_PUBLIC_BACKEND_URL | Backend API URL |
 
-- No `DATABASE_URL` required
-- In-memory sample inventory data
-- Works without Razorpay keys (uses mock checkout)
-- Perfect for local development and demos
+---
 
-## Troubleshooting
+# 🐛 Troubleshooting
 
-### Backend won't connect to database
-- Check your `DATABASE_URL` is correct
-- Ensure PostgreSQL is running
-- The app will work in demo mode without a database
+## Database Connection Error
 
-### Frontend can't reach backend
-- Verify backend is running on `http://localhost:4000`
-- Check `NEXT_PUBLIC_BACKEND_URL` environment variable
-- Ensure CORS is enabled on the backend
+- Check PostgreSQL is running
+- Verify DATABASE_URL
+- App works in demo mode without DB
 
-### Razorpay not working
-- If `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are not set, the app uses mock checkout
-- This is normal for development
+---
 
-## License
+## Razorpay Issues
 
-[Add your license here]
+If Razorpay keys are missing:
 
-## Contact
+- Mock checkout is automatically enabled
+- Useful for development/testing
 
-[Add contact information here]
+---
+
+## Frontend Cannot Reach Backend
+
+Verify:
+
+```bash
+http://localhost:4000
+```
+
+is running.
+
+---
+
+# 📈 Future Improvements
+
+- AI-based inventory prediction
+- Agentic AI ordering assistant
+- Admin analytics dashboard
+- Email/SMS notifications
+- Multi-warehouse support
+- Redis caching
+- Docker deployment
+- CI/CD pipeline
+
+---
+
+# 👨‍💻 Author
+
+## Srijan Jaiswal
+
+B.Tech CSE Student  
+Full Stack Developer | DevOps Enthusiast
+
+- AWS
+- Docker
+- Prisma
+- Next.js
+- TypeScript
+- PostgreSQL
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
