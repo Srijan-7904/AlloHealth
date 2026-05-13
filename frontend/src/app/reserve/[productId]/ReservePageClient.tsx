@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '../../../components/toast';
 
 declare global {
@@ -36,7 +36,6 @@ type RazorpayOrderResponse = {
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? 'http://localhost:4000';
-const frontendRazorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
 function formatMoney(amountPaise: number) {
@@ -53,10 +52,10 @@ function loadRazorpayScript() {
       resolve(true);
       return;
     }
-    const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(true), { once: true });
-      existingScript.addEventListener('error', () => resolve(false), { once: true });
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(true), { once: true });
+      existing.addEventListener('error', () => resolve(false), { once: true });
       return;
     }
     const script = document.createElement('script');
@@ -68,10 +67,8 @@ function loadRazorpayScript() {
   });
 }
 
-export default function ReservePage() {
-  const params = useParams<{ productId: string }>();
+export default function ReservePage({ productId }: { productId: number }) {
   const searchParams = useSearchParams();
-  const productId = Number(params.productId);
   const warehouseId = Number(searchParams.get('warehouseId') || 0);
   const [quantity, setQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,20 +86,17 @@ export default function ReservePage() {
       setCountdown('');
       return;
     }
-    const updateCountdown = () => {
-      const remainingMs = new Date(reservation.expiresAt).getTime() - Date.now();
-      if (remainingMs <= 0) {
-        setCountdown('Expired');
-        return;
-      }
-      const totalSeconds = Math.floor(remainingMs / 1000);
-      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
-      const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-      setCountdown(`${minutes}:${seconds}`);
+    const update = () => {
+      const remaining = new Date(reservation.expiresAt).getTime() - Date.now();
+      if (remaining <= 0) return setCountdown('Expired');
+      const secs = Math.floor(remaining / 1000);
+      const mins = String(Math.floor(secs / 60)).padStart(2, '0');
+      const sec = String(secs % 60).padStart(2, '0');
+      setCountdown(`${mins}:${sec}`);
     };
-    updateCountdown();
-    const interval = window.setInterval(updateCountdown, 1000);
-    return () => window.clearInterval(interval);
+    update();
+    const id = window.setInterval(update, 1000);
+    return () => window.clearInterval(id);
   }, [reservation]);
 
   const isExpired = useMemo(() => countdown === 'Expired', [countdown]);
@@ -111,7 +105,7 @@ export default function ReservePage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const res = await fetch(apiBaseUrl + '/api/reservations', {
+      const res = await fetch(`${apiBaseUrl}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, warehouseId, quantity })
@@ -119,12 +113,12 @@ export default function ReservePage() {
       if (!res.ok) {
         const body = await res.json();
         setError(body.error || 'Failed');
-        pushToast({ title: 'Reservation failed', description: body.error || 'Failed to reserve stock.', variant: 'error' });
+        pushToast({ title: 'Reservation failed', description: body.error || 'Failed', variant: 'error' });
         return;
       }
       const data = await res.json();
       setReservation(data.reservation || data);
-      pushToast({ title: 'Reservation created', description: `Held ${quantity} unit(s) for checkout.`, variant: 'success' });
+      pushToast({ title: 'Reservation created', description: `Held ${quantity} unit(s)`, variant: 'success' });
     } catch (e: any) {
       setError(e.message);
       pushToast({ title: 'Reservation failed', description: e.message, variant: 'error' });
@@ -133,12 +127,15 @@ export default function ReservePage() {
     }
   }
 
-  async function confirmPayment(orderResponse: RazorpayOrderResponse, payment: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string } | null) {
-    const res = await fetch(apiBaseUrl + `/api/reservations/${orderResponse.reservationId}/confirm`, {
+  async function confirmPayment(
+    order: RazorpayOrderResponse,
+    payment: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string } | null
+  ) {
+    const res = await fetch(`${apiBaseUrl}/api/reservations/${order.reservationId}/confirm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(
-        orderResponse.provider === 'mock'
+        order.provider === 'mock'
           ? { provider: 'mock' }
           : {
             provider: 'razorpay',
@@ -154,7 +151,7 @@ export default function ReservePage() {
     }
     const data = await res.json();
     setReservation(data.reservation || data);
-    pushToast({ title: 'Payment confirmed', description: 'Reservation converted into confirmed stock.', variant: 'success' });
+    pushToast({ title: 'Payment confirmed', description: 'Reservation confirmed', variant: 'success' });
     router.push('/products');
   }
 
@@ -162,15 +159,18 @@ export default function ReservePage() {
     if (!reservation) return;
     if (isExpired) {
       setError('Reservation expired');
-      pushToast({ title: 'Reservation expired', description: 'Please create a new reservation.', variant: 'error' });
+      pushToast({ title: 'Reservation expired', description: 'Create a new reservation', variant: 'error' });
       return;
     }
     setIsPaying(true);
     setError(null);
     try {
-      const orderRes = await fetch(apiBaseUrl + `/api/reservations/${reservation.id}/razorpay-order`, {
+      const orderRes = await fetch(`${apiBaseUrl}/api/reservations/${reservation.id}/razorpay-order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': `razorpay-order-${reservation.id}` }
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': `razorpay-order-${reservation.id}`
+        }
       });
       if (!orderRes.ok) {
         const body = await orderRes.json();
@@ -180,13 +180,11 @@ export default function ReservePage() {
       if (order.provider === 'mock') {
         setPendingTestOrder(order);
         setTestCheckoutOpen(true);
-        pushToast({ title: 'Test checkout opened', description: 'Demo mode is using the in-app checkout flow.', variant: 'info' });
+        pushToast({ title: 'Test checkout opened', variant: 'info' });
         return;
       }
       const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded || !window.Razorpay) {
-        throw new Error('Unable to load Razorpay checkout');
-      }
+      if (!scriptLoaded || !window.Razorpay) throw new Error('Unable to load Razorpay checkout');
       const razorpay = new window.Razorpay({
         key: order.keyId,
         amount: order.amountPaise,
@@ -194,24 +192,24 @@ export default function ReservePage() {
         name: 'Allo Inventory',
         description: `${order.productName} - ${order.warehouseName}`,
         order_id: order.orderId,
-        handler: async (response: any) => {
+        handler: async (resp: any) => {
           try {
-            await confirmPayment(order, response);
-          } catch (paymentError: any) {
-            const message = paymentError.message || 'Payment verification failed';
-            setError(message);
-            pushToast({ title: 'Payment failed', description: message, variant: 'error' });
+            await confirmPayment(order, resp);
+          } catch (e: any) {
+            const msg = e.message || 'Payment verification failed';
+            setError(msg);
+            pushToast({ title: 'Payment failed', description: msg, variant: 'error' });
           }
         },
-        modal: { ondismiss: () => { pushToast({ title: 'Payment cancelled', description: 'Checkout window was closed.', variant: 'info' }); } },
+        modal: { ondismiss: () => pushToast({ title: 'Payment cancelled', variant: 'info' }) },
         prefill: { name: 'Customer' },
         theme: { color: '#0f766e' }
       });
       razorpay.open();
     } catch (e: any) {
-      const message = e.message || 'Unable to open payment checkout';
-      setError(message);
-      pushToast({ title: 'Checkout failed', description: message, variant: 'error' });
+      const msg = e.message || 'Checkout error';
+      setError(msg);
+      pushToast({ title: 'Checkout failed', description: msg, variant: 'error' });
     } finally {
       setIsPaying(false);
     }
@@ -219,14 +217,14 @@ export default function ReservePage() {
 
   async function releaseReservation() {
     if (!reservation) return;
-    const response = await fetch(apiBaseUrl + `/api/reservations/${reservation.id}/release`, { method: 'POST' });
-    if (!response.ok) {
-      const body = await response.json().catch(() => ({}));
+    const res = await fetch(`${apiBaseUrl}/api/reservations/${reservation.id}/release`, { method: 'POST' });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
       throw new Error(body.error || 'Unable to cancel reservation');
     }
-    const data = await response.json();
+    const data = await res.json();
     setReservation(data.reservation || data);
-    pushToast({ title: 'Reservation released', description: 'The hold was released back to inventory.', variant: 'info' });
+    pushToast({ title: 'Reservation released', variant: 'info' });
     router.push('/products');
   }
 
@@ -235,7 +233,7 @@ export default function ReservePage() {
       <section className="reserve-panel">
         <span className="eyebrow">Reservation flow</span>
         <h1 className="page-title">Create a reservation</h1>
-        <p className="page-copy">Hold stock first, then pay with Razorpay to convert the reservation into confirmed inventory.</p>
+        <p className="page-copy">Hold stock first, then pay with Razorpay to confirm.</p>
         <div className="reservation-summary">
           <div>
             <div className="summary-label">Product</div>
@@ -249,28 +247,58 @@ export default function ReservePage() {
         <div className="field-group">
           <label className="field-label" htmlFor="quantity">Quantity</label>
           <div className="quantity-stepper">
-            <button type="button" className="stepper-button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
-            <input id="quantity" type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))} className="number-input" />
-            <button type="button" className="stepper-button" onClick={() => setQuantity((value) => value + 1)}>+</button>
+            <button
+              type="button"
+              className="stepper-button"
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+            >
+              −
+            </button>
+            <input
+              id="quantity"
+              type="number"
+              min={1}
+              value={quantity}
+              onChange={e => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+              className="number-input"
+            />
+            <button
+              type="button"
+              className="stepper-button"
+              onClick={() => setQuantity(q => q + 1)}
+            >
+              +
+            </button>
           </div>
         </div>
         <div className="action-row">
-          <button onClick={createReservation} className="button button--primary button--wide" disabled={isSubmitting || isPaying}>
+          <button
+            onClick={createReservation}
+            className="button button--primary button--wide"
+            disabled={isSubmitting || isPaying}
+          >
             {isSubmitting ? 'Creating...' : 'Reserve stock'}
           </button>
-          <button onClick={() => router.push('/products')} className="button button--secondary button--wide">Back to products</button>
+          <button
+            onClick={() => router.push('/products')}
+            className="button button--secondary button--wide"
+          >
+            Back to products
+          </button>
         </div>
         {error && <div className="notice notice--error">{error}</div>}
       </section>
+
       <aside className="reserve-sidebar">
         <div className="info-card info-card--sticky">
           <div className="info-card__label">What happens next</div>
           <ul className="feature-list feature-list--compact">
             <li>Stock is held immediately after reservation</li>
-            <li>Pay with Razorpay before the hold expires</li>
+            <li>Pay before the hold expires</li>
             <li>Successful payment confirms the reservation</li>
           </ul>
         </div>
+
         {reservation && (
           <div className="reservation-card">
             <div className="reservation-card__header">
@@ -278,7 +306,9 @@ export default function ReservePage() {
                 <span className="reservation-card__label">Reservation created</span>
                 <h2>#{reservation.id.slice(0, 8)}</h2>
               </div>
-              <span className={`status-chip status-chip--${reservation.status.toLowerCase()}`}>{reservation.status}</span>
+              <span className={`status-chip status-chip--${reservation.status.toLowerCase()}`}>
+                {reservation.status}
+              </span>
             </div>
             <div className="reservation-details">
               <div>
@@ -287,7 +317,9 @@ export default function ReservePage() {
               </div>
               <div>
                 <span className="detail-label">Countdown</span>
-                <span className={`detail-value ${isExpired ? 'warehouse-stock--low' : ''}`}>{countdown || '--:--'}</span>
+                <span className={`detail-value ${isExpired ? 'warehouse-stock--low' : ''}`}>
+                  {countdown || '--:--'}
+                </span>
               </div>
               <div>
                 <span className="detail-label">Quantity</span>
@@ -299,42 +331,92 @@ export default function ReservePage() {
               </div>
             </div>
             <div className="action-row action-row--stacked">
-              <button onClick={startRazorpayCheckout} className="button button--success button--wide" disabled={isPaying || isExpired}>
+              <button
+                onClick={startRazorpayCheckout}
+                className="button button--success button--wide"
+                disabled={isPaying || isExpired}
+              >
                 {isPaying ? 'Opening checkout...' : 'Confirm purchase with Razorpay'}
               </button>
-              <button onClick={releaseReservation} className="button button--ghost button--wide">Cancel reservation</button>
+              <button
+                onClick={releaseReservation}
+                className="button button--ghost button--wide"
+              >
+                Cancel reservation
+              </button>
             </div>
           </div>
         )}
       </aside>
+
       {testCheckoutOpen && pendingTestOrder && (
-        <div className="test-checkout-backdrop" role="dialog" aria-modal="true" aria-labelledby="test-checkout-title">
+        <div
+          className="test-checkout-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="test-checkout-title"
+        >
           <div className="test-checkout-card">
             <div className="test-checkout__header">
               <div>
                 <div className="eyebrow">Test payment</div>
                 <h2 id="test-checkout-title">Complete demo checkout</h2>
               </div>
-              <button type="button" className="test-checkout__close" onClick={() => { setTestCheckoutOpen(false); setPendingTestOrder(null); pushToast({ title: 'Payment cancelled', description: 'Checkout was closed.', variant: 'info' }); }}>×</button>
-            </div>
-            <div className="test-checkout__summary">
-              <div><span className="summary-label">Product</span><span className="summary-value">{pendingTestOrder.productName}</span></div>
-              <div><span className="summary-label">Warehouse</span><span className="summary-value">{pendingTestOrder.warehouseName}</span></div>
-              <div><span className="summary-label">Amount</span><span className="summary-value">{formatMoney(pendingTestOrder.amountPaise)}</span></div>
-            </div>
-            <div className="test-checkout__actions">
-              <button type="button" className="button button--primary button--wide" onClick={async () => {
-                try {
-                  await confirmPayment(pendingTestOrder, null);
+              <button
+                type="button"
+                className="test-checkout__close"
+                onClick={() => {
                   setTestCheckoutOpen(false);
                   setPendingTestOrder(null);
-                } catch (paymentError: any) {
-                  const message = paymentError.message || 'Payment verification failed';
-                  setError(message);
-                  pushToast({ title: 'Payment failed', description: message, variant: 'error' });
-                }
-              }}>Pay now</button>
-              <button type="button" className="button button--secondary button--wide" onClick={() => { setTestCheckoutOpen(false); setPendingTestOrder(null); pushToast({ title: 'Payment cancelled', description: 'Checkout was closed.', variant: 'info' }); }}>Cancel</button>
+                  pushToast({ title: 'Payment cancelled', variant: 'info' });
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <div className="test-checkout__summary">
+              <div>
+                <span className="summary-label">Product</span>
+                <span className="summary-value">{pendingTestOrder.productName}</span>
+              </div>
+              <div>
+                <span className="summary-label">Warehouse</span>
+                <span className="summary-value">{pendingTestOrder.warehouseName}</span>
+              </div>
+              <div>
+                <span className="summary-label">Amount</span>
+                <span className="summary-value">{formatMoney(pendingTestOrder.amountPaise)}</span>
+              </div>
+            </div>
+            <div className="test-checkout__actions">
+              <button
+                type="button"
+                className="button button--primary button--wide"
+                onClick={async () => {
+                  try {
+                    await confirmPayment(pendingTestOrder, null);
+                    setTestCheckoutOpen(false);
+                    setPendingTestOrder(null);
+                  } catch (e: any) {
+                    const msg = e.message || 'Payment verification failed';
+                    setError(msg);
+                    pushToast({ title: 'Payment failed', description: msg, variant: 'error' });
+                  }
+                }}
+              >
+                Pay now
+              </button>
+              <button
+                type="button"
+                className="button button--secondary button--wide"
+                onClick={() => {
+                  setTestCheckoutOpen(false);
+                  setPendingTestOrder(null);
+                  pushToast({ title: 'Payment cancelled', variant: 'info' });
+                }}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

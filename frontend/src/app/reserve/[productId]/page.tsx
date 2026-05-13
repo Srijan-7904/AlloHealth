@@ -1,8 +1,8 @@
 import ReservePageClient from './ReservePageClient';
 
 /**
- * Generate static params for all product IDs so Next.js 
- * can pre‑render the dynamic route during static export.
+ * Generate static params for all product IDs so Next.js
+ * can pre-render the dynamic route during static export.
  */
 export async function generateStaticParams() {
   try {
@@ -12,11 +12,11 @@ export async function generateStaticParams() {
     const products = await res.json();
     return products.map((p: any) => ({ productId: p.id.toString() }));
   } catch (e) {
-    // Return empty array on failure to prevent build break
     return [];
   }
 }
 
-export default function ReservePage() {
-  return <ReservePageClient />;
+export default function ReservePage({ params }: { params: { productId: string } }) {
+  const productId = Number(params.productId);
+  return <ReservePageClient productId={productId} />;
 }
